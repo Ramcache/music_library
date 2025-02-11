@@ -24,17 +24,18 @@ type Pagination struct {
 	Limit int `form:"limit,default=10"`
 }
 
-// @Summary Get all songs
-// @Description Get all songs with filtering and pagination
+// GetSongs
+// @Summary Получение всех песен
+// @Description Получение списка всех песен с возможностью фильтрации и пагинации
 // @Tags songs
 // @Accept json
 // @Produce json
-// @Param group query string false "Group filter"
-// @Param song query string false "Song filter"
-// @Param release_date query string false "Release date filter"
-// @Param link query string false "Link filter"
-// @Param page query int false "Page number"
-// @Param limit query int false "Items per page"
+// @Param group query string false "Фильтр по группе"
+// @Param song query string false "Фильтр по названию песни"
+// @Param release_date query string false "Фильтр по дате выпуска"
+// @Param link query string false "Фильтр по ссылке"
+// @Param page query int false "Номер страницы"
+// @Param limit query int false "Количество элементов на странице"
 // @Success 200 {object} map[string]interface{}
 // @Router /songs [get]
 func (h *Handler) GetSongs(c *gin.Context) {
@@ -67,21 +68,22 @@ func (h *Handler) GetSongs(c *gin.Context) {
 	})
 }
 
-// @Summary Get song lyrics
-// @Description Get paginated song lyrics by ID
+// GetSongText
+// @Summary Получение текста песни
+// @Description Получение текста песни по её ID с пагинацией
 // @Tags songs
 // @Accept json
 // @Produce json
-// @Param id path int true "Song ID"
-// @Param page query int false "Page number"
-// @Param limit query int false "Items per page"
+// @Param id path int true "ID песни"
+// @Param page query int false "Номер страницы"
+// @Param limit query int false "Количество элементов на странице"
 // @Success 200 {object} map[string]interface{}
 // @Router /songs/{id}/text [get]
 func (h *Handler) GetSongText(c *gin.Context) {
 	id := c.Param("id")
 	var song models.Song
 	if result := h.DB.First(&song, id); result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Song not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Песня не найдена"})
 		return
 	}
 
@@ -106,12 +108,13 @@ func (h *Handler) GetSongText(c *gin.Context) {
 	})
 }
 
-// @Summary Delete a song
-// @Description Delete a song by ID
+// DeleteSong
+// @Summary Удаление песни
+// @Description Удаление песни по её ID
 // @Tags songs
 // @Accept json
 // @Produce json
-// @Param id path int true "Song ID"
+// @Param id path int true "ID песни"
 // @Success 204
 // @Router /songs/{id} [delete]
 func (h *Handler) DeleteSong(c *gin.Context) {
@@ -123,13 +126,14 @@ func (h *Handler) DeleteSong(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// @Summary Update a song
-// @Description Update a song by ID
+// UpdateSong
+// @Summary Обновление информации о песне
+// @Description Обновление данных о песне по её ID
 // @Tags songs
 // @Accept json
 // @Produce json
-// @Param id path int true "Song ID"
-// @Param input body models.Song true "Song data"
+// @Param id path int true "ID песни"
+// @Param input body models.Song true "Обновлённые данные песни"
 // @Success 200 {object} models.Song
 // @Router /songs/{id} [put]
 func (h *Handler) UpdateSong(c *gin.Context) {
@@ -148,12 +152,12 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 	c.JSON(http.StatusOK, song)
 }
 
-// @Summary Add a new song
-// @Description Add a new song with data from external API
+// @Summary Добавление новой песни
+// @Description Добавление новой песни с данными из внешнего API
 // @Tags songs
 // @Accept json
 // @Produce json
-// @Param input body models.Song true "Song data"
+// @Param input body models.Song true "Данные новой песни"
 // @Success 201 {object} models.Song
 // @Router /songs [post]
 func (h *Handler) AddSong(c *gin.Context) {
@@ -167,18 +171,17 @@ func (h *Handler) AddSong(c *gin.Context) {
 		return
 	}
 
-	// Call external API
 	apiURL := h.Config.APIBaseURL + "/info"
 	resp, err := http.Get(apiURL + "?group=" + req.Group + "&song=" + req.Song)
 	if err != nil {
-		h.Log.WithError(err).Error("Failed to call external API")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "External API error"})
+		h.Log.WithError(err).Error("Ошибка при запросе к внешнему API")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка внешнего API"})
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		c.JSON(resp.StatusCode, gin.H{"error": "External API returned error"})
+		c.JSON(resp.StatusCode, gin.H{"error": "Внешний API вернул ошибку"})
 		return
 	}
 
@@ -188,8 +191,8 @@ func (h *Handler) AddSong(c *gin.Context) {
 		Link        string `json:"link"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&detail); err != nil {
-		h.Log.WithError(err).Error("Failed to decode response")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error"})
+		h.Log.WithError(err).Error("Ошибка декодирования ответа")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Внутренняя ошибка"})
 		return
 	}
 
@@ -202,8 +205,8 @@ func (h *Handler) AddSong(c *gin.Context) {
 	}
 
 	if result := h.DB.Create(&song); result.Error != nil {
-		h.Log.WithError(result.Error).Error("Failed to create song")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		h.Log.WithError(result.Error).Error("Ошибка создания записи в БД")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка базы данных"})
 		return
 	}
 

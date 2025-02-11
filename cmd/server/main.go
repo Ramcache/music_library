@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	_ "music_library/docs"
 	"music_library/internal/config"
 	"music_library/internal/handlers"
 	"music_library/internal/models"
-
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "music_library/docs"
 )
 
 func main() {
@@ -29,7 +28,6 @@ func main() {
 		log.Fatal("Failed to connect to database: ", err)
 	}
 
-	// Auto migrations
 	if err := db.AutoMigrate(&models.Song{}); err != nil {
 		log.Fatal("Failed to migrate database: ", err)
 	}
@@ -41,7 +39,6 @@ func main() {
 		Log:    log,
 	}
 
-	// Routes
 	router.GET("/songs", handler.GetSongs)
 	router.GET("/songs/:id/text", handler.GetSongText)
 	router.DELETE("/songs/:id", handler.DeleteSong)
